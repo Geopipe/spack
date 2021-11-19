@@ -23,7 +23,7 @@ class Llvm(CMakePackage, CudaPackage):
     url = "https://github.com/llvm/llvm-project/archive/llvmorg-7.1.0.tar.gz"
     list_url = "https://releases.llvm.org/download.html"
     git = "https://github.com/llvm/llvm-project"
-    maintainers = ['trws', 'naromero77']
+    maintainers = ['trws', 'haampie']
 
     tags = ['e4s']
 
@@ -154,6 +154,8 @@ class Llvm(CMakePackage, CudaPackage):
             description="Enable code-signing on macOS")
     variant("python", default=False, description="Install python bindings")
 
+    variant('version_suffix', default='none', description="Add a symbol suffix")
+
     extends("python", when="+python")
 
     # Build dependency
@@ -196,6 +198,8 @@ class Llvm(CMakePackage, CudaPackage):
     conflicts("+flang", when="~clang")
     # Introduced in version 11 as a part of LLVM and not a separate package.
     conflicts("+flang", when="@:10")
+
+    conflicts('~mlir', when='+flang', msg='Flang requires MLIR')
 
     # Older LLVM do not build with newer compilers, and vice versa
     conflicts("%gcc@11:", when="@:7")
@@ -468,6 +472,10 @@ class Llvm(CMakePackage, CudaPackage):
             define("LIBOMP_USE_HWLOC", True),
             define("LIBOMP_HWLOC_INSTALL_DIR", spec["hwloc"].prefix),
         ]
+
+        version_suffix = spec.variants['version_suffix'].value
+        if version_suffix != 'none':
+            cmake_args.append(define('LLVM_VERSION_SUFFIX', version_suffix))
 
         if python.version >= Version("3"):
             cmake_args.append(define("Python3_EXECUTABLE", python.command.path))
