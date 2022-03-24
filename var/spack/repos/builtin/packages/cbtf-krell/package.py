@@ -1,4 +1,4 @@
-# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2022 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -6,6 +6,7 @@
 import spack
 import spack.store
 from spack import *
+from spack.pkg.builtin.boost import Boost
 
 
 class CbtfKrell(CMakePackage):
@@ -29,12 +30,8 @@ class CbtfKrell(CMakePackage):
             description="Build mpi experiment collector for SGI MPT MPI.")
     variant('mvapich2', default=False,
             description="Build mpi experiment collector for mvapich2 MPI.")
-    variant('mvapich', default=False,
-            description="Build mpi experiment collector for mvapich MPI.")
     variant('mpich2', default=False,
             description="Build mpi experiment collector for mpich2 MPI.")
-    variant('mpich', default=False,
-            description="Build mpi experiment collector for mpich MPI.")
     variant('runtime', default=False,
             description="build only the runtime libraries and collectors.")
     variant('build_type', default='RelWithDebInfo',
@@ -58,6 +55,11 @@ class CbtfKrell(CMakePackage):
 
     # For boost
     depends_on("boost@1.70.0:")
+
+    # TODO: replace this with an explicit list of components of Boost,
+    # for instance depends_on('boost +filesystem')
+    # See https://github.com/spack/spack/pull/22303 for reference
+    depends_on(Boost.with_default_variants)
 
     # For Dyninst
     depends_on("dyninst@10.1.0", when='@develop')
@@ -90,10 +92,8 @@ class CbtfKrell(CMakePackage):
 
     # MPI Installations
     depends_on("openmpi", when='+openmpi')
-    depends_on("mpich@:1", when='+mpich')
     depends_on("mpich@2:", when='+mpich2')
     depends_on("mvapich2@2:", when='+mvapich2')
-    depends_on("mvapich2@:1", when='+mvapich')
     depends_on("mpt", when='+mpt')
 
     depends_on("python", when='@develop', type=('build', 'run'))
@@ -124,15 +124,9 @@ class CbtfKrell(CMakePackage):
         # openmpi
         if spec.satisfies('+openmpi'):
             mpi_options.append('-DOPENMPI_DIR=%s' % spec['openmpi'].prefix)
-        # mpich
-        if spec.satisfies('+mpich'):
-            mpi_options.append('-DMPICH_DIR=%s' % spec['mpich'].prefix)
         # mpich2
         if spec.satisfies('+mpich2'):
             mpi_options.append('-DMPICH2_DIR=%s' % spec['mpich2'].prefix)
-        # mvapich
-        if spec.satisfies('+mvapich'):
-            mpi_options.append('-DMVAPICH_DIR=%s' % spec['mvapich'].prefix)
         # mvapich2
         if spec.satisfies('+mvapich2'):
             mpi_options.append('-DMVAPICH2_DIR=%s' % spec['mvapich2'].prefix)
@@ -244,12 +238,6 @@ class CbtfKrell(CMakePackage):
         # mpi runtimes for cbtfsummary
         # Users may have to set the CBTF_MPI_IMPLEMENTATION variable
         # manually if multiple mpi's are specified in the build
-
-        if self.spec.satisfies('+mpich'):
-            env.set('CBTF_MPI_IMPLEMENTATION', "mpich")
-
-        if self.spec.satisfies('+mvapich'):
-            env.set('CBTF_MPI_IMPLEMENTATION', "mvapich")
 
         if self.spec.satisfies('+mvapich2'):
             env.set('CBTF_MPI_IMPLEMENTATION', "mvapich2")

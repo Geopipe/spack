@@ -1,4 +1,4 @@
-# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2022 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -20,6 +20,9 @@ class Petsc(Package, CudaPackage, ROCmPackage):
 
     version('main', branch='main')
 
+    version('3.16.5', sha256='7de8570eeb94062752d82a83208fc2bafc77b3f515023a4c14d8ff9440e66cac')
+    version('3.16.4', sha256='229cce22bdcfedb1fe827d306ed1afca9737786cdc3f0562b74a1966c1243caf')
+    version('3.16.3', sha256='eff44c7e7f12991dc7d2b627c477807a215ce16c2ce8a1c78aa8237ddacf6ca5')
     version('3.16.2', sha256='7ab257ae150d4837ac8d3872a1d206997962578785ec2427639ceac46d131bbc')
     version('3.16.1', sha256='909cf7bce7b6a0ddb2580a1ac9502aa01631ec4105c716594c1804f0ee1ea06a')
     version('3.16.0', sha256='5aaad7deea127a4790c8aa95c42fd9451ab10b5d6c68b226b92d4853002f438d')
@@ -210,7 +213,6 @@ class Petsc(Package, CudaPackage, ROCmPackage):
     # Virtual dependencies
     # Git repository needs sowing to build Fortran interface
     depends_on('sowing', when='@main')
-    depends_on('sowing@1.1.23-p1', when='@xsdk-0.2.0')
 
     # PETSc, hypre, superlu_dist when built with int64 use 32 bit integers
     # with BLAS/LAPACK
@@ -271,8 +273,6 @@ class Petsc(Package, CudaPackage, ROCmPackage):
     depends_on('hypre@2.14:2.22.0+mpi~internal-superlu+int64', when='@3.14:3.15+hypre+mpi~complex+int64')
     depends_on('hypre@2.14:+mpi~internal-superlu~int64', when='@3.16:+hypre+mpi~complex~int64')
     depends_on('hypre@2.14:+mpi~internal-superlu+int64', when='@3.16:+hypre+mpi~complex+int64')
-    depends_on('hypre@xsdk-0.2.0+mpi~internal-superlu+int64', when='@xsdk-0.2.0+hypre+mpi~complex+int64')
-    depends_on('hypre@xsdk-0.2.0+mpi~internal-superlu~int64', when='@xsdk-0.2.0+hypre+mpi~complex~int64')
     depends_on('hypre@develop+mpi~internal-superlu+int64', when='@main+hypre+mpi~complex+int64')
     depends_on('hypre@develop+mpi~internal-superlu~int64', when='@main+hypre+mpi~complex~int64')
     depends_on('superlu-dist@:4.3~int64', when='@3.4.4:3.6.4+superlu-dist+mpi~int64')
@@ -287,8 +287,6 @@ class Petsc(Package, CudaPackage, ROCmPackage):
     depends_on('superlu-dist@6.1.0:6.1+int64', when='@3.10.3:3.12+superlu-dist+mpi+int64')
     depends_on('superlu-dist@6.1:~int64', when='@3.13.0:+superlu-dist+mpi~int64')
     depends_on('superlu-dist@6.1:+int64', when='@3.13.0:+superlu-dist+mpi+int64')
-    depends_on('superlu-dist@xsdk-0.2.0~int64', when='@xsdk-0.2.0+superlu-dist+mpi~int64')
-    depends_on('superlu-dist@xsdk-0.2.0+int64', when='@xsdk-0.2.0+superlu-dist+mpi+int64')
     depends_on('superlu-dist@develop~int64', when='@main+superlu-dist+mpi~int64')
     depends_on('superlu-dist@develop+int64', when='@main+superlu-dist+mpi+int64')
     depends_on('strumpack', when='+strumpack')
@@ -301,7 +299,6 @@ class Petsc(Package, CudaPackage, ROCmPackage):
     depends_on('mumps+mpi~int64+metis+parmetis+openmp', when='+mumps+metis+openmp')
     depends_on('scalapack', when='+mumps')
     depends_on('trilinos@12.6.2:+mpi', when='@3.7.0:+trilinos+mpi')
-    depends_on('trilinos@xsdk-0.2.0+mpi', when='@xsdk-0.2.0+trilinos+mpi')
     depends_on('trilinos@develop+mpi', when='@main+trilinos+mpi')
     depends_on('mkl', when='+mkl-pardiso')
     depends_on('fftw+mpi', when='+fftw+mpi')
@@ -328,6 +325,8 @@ class Petsc(Package, CudaPackage, ROCmPackage):
     depends_on('kokkos+cuda+wrapper+cuda_lambda', when='+kokkos +cuda')
     depends_on('kokkos-kernels+cuda', when='+kokkos +cuda')
     depends_on('kokkos+rocm', when='+kokkos +rocm')
+
+    phases = ['configure', 'build', 'install']
 
     # Using the following tarballs
     # * petsc-3.12 (and older) - includes docs
@@ -361,7 +360,8 @@ class Petsc(Package, CudaPackage, ROCmPackage):
                 compiler_opts.append('--FC_LINKER_FLAGS=-lintlc')
         return compiler_opts
 
-    def install(self, spec, prefix):
+    def configure_options(self):
+        spec = self.spec
         options = ['--with-ssl=0',
                    '--download-c2html=0',
                    '--download-sowing=0',
@@ -406,7 +406,7 @@ class Petsc(Package, CudaPackage, ROCmPackage):
             if spec.satisfies('^trilinos+boost'):
                 options.append('--with-boost=1')
 
-        if self.spec.satisfies('clanguage=C++'):
+        if spec.satisfies('clanguage=C++'):
             options.append('--with-clanguage=C++')
         else:
             options.append('--with-clanguage=C')
@@ -419,6 +419,7 @@ class Petsc(Package, CudaPackage, ROCmPackage):
         # default: 'gmp', => ('gmp', 'gmp', True, True)
         # any other combination needs a full tuple
         # if not (useinc || uselib): usedir - i.e (False, False)
+        direct_dependencies = [x.name for x in spec.dependencies()]
         for library in (
                 ('cuda', 'cuda', False, False),
                 ('hip', 'hip', True, False),
@@ -430,7 +431,7 @@ class Petsc(Package, CudaPackage, ROCmPackage):
                 ('superlu-dist', 'superlu_dist', True, True),
                 ('scotch', 'ptscotch', True, True),
                 ('suite-sparse:umfpack,klu,cholmod,btf,ccolamd,colamd,camd,amd, \
-                suitesparseconfig', 'suitesparse', True, True),
+                suitesparseconfig,spqr', 'suitesparse', True, True),
                 ('hdf5:hl,fortran', 'hdf5', True, True),
                 'zlib',
                 'mumps',
@@ -469,7 +470,7 @@ class Petsc(Package, CudaPackage, ROCmPackage):
                 useinc = True
                 uselib = True
 
-            library_requested = spacklibname.split(':')[0] in spec.dependencies_dict()
+            library_requested = spacklibname.split(':')[0] in direct_dependencies
             options.append(
                 '--with-{library}={value}'.format(
                     library=petsclibname,
@@ -534,20 +535,30 @@ class Petsc(Package, CudaPackage, ROCmPackage):
         if '+hpddm' in spec:
             options.append('--download-hpddm')
 
+        return options
+
+    def revert_kokkos_nvcc_wrapper(self):
         # revert changes by kokkos-nvcc-wrapper
-        if spec.satisfies('^kokkos+cuda+wrapper'):
+        if self.spec.satisfies('^kokkos+cuda+wrapper'):
             env['MPICH_CXX'] = env['CXX']
             env['OMPI_CXX'] = env['CXX']
             env['MPICXX_CXX'] = env['CXX']
 
-        python('configure', '--prefix=%s' % prefix, *options)
+    def configure(self, spec, prefix):
+        self.revert_kokkos_nvcc_wrapper()
+        python('configure', '--prefix=%s' % prefix, *self.configure_options())
 
+    def build(self, spec, prefix):
+        self.revert_kokkos_nvcc_wrapper()
         # PETSc has its own way of doing parallel make.
         make('V=1 MAKE_NP=%s' % make_jobs, parallel=False)
+
+    def install(self, spec, prefix):
+        self.revert_kokkos_nvcc_wrapper()
         make("install")
 
         if self.run_tests:
-            make('check PETSC_ARCH="" PETSC_DIR={0}'.format(self.prefix),
+            make('check PETSC_ARCH="" PETSC_DIR={0}'.format(prefix),
                  parallel=False)
 
     def setup_build_environment(self, env):
