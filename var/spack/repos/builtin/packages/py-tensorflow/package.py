@@ -17,6 +17,7 @@ class PyTensorflow(Package, CudaPackage):
     maintainers = ['adamjstewart', 'aweits']
     import_modules = ['tensorflow']
 
+    version('2.8.2',  sha256='b3f860c02c22a30e9787e2548ca252ab289a76b7778af6e9fa763d4aafd904c7')
     version('2.7.0',  sha256='bb124905c7fdacd81e7c842b287c169bbf377d29c74c9dacc04f96c9793747bb')
     version('2.6.2',  sha256='e68c1d346fc3d529653530ca346b2c62f5b31bd4fcca7ffc9c65bb39ab2f6ed3')
     version('2.6.1',  sha256='8e457f617bc2eb43de2a51900e7922b60a8107e2524b2576438f1acccee1d043')
@@ -116,7 +117,8 @@ class PyTensorflow(Package, CudaPackage):
     # Need to investigate further.
 
     # See _TF_MIN_BAZEL_VERSION and _TF_MAX_BAZEL_VERSION in configure.py
-    depends_on('bazel@3.7.2:4.99.0',  type='build', when='@2.7:')
+    depends_on('bazel@4.2.1:4.99.0',  type='build', when='@2.8:')
+    depends_on('bazel@3.7.2:4.99.0',  type='build', when='@2.7:2.7.develop')
     depends_on('bazel@3.1.0:3.99.0',  type='build', when='@2.3:2.6')
     depends_on('bazel@2.0.0',         type='build', when='@2.2.0:2.2')
     depends_on('bazel@0.27.1:0.29.1', type='build', when='@2.1.0:2.1')

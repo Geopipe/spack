@@ -18,6 +18,7 @@ class Bazel(Package):
 
     tags = ['build-tools']
 
+    version('4.2.2',  sha256='9981d0d53a356c4e87962847750a97c9e8054e460854748006c80f0d7e2b2d33')
     version('4.0.0',  sha256='d350f80e70654932db252db380d2ec0144a00e86f8d9f2b4c799ffdb48e9cdd1')
     version('3.7.2',  sha256='de255bb42163a915312df9f4b86e5b874b46d9e8d4b72604b5123c3a845ed9b1')
     version('3.7.1',  sha256='c9244e5905df6b0190113e26082c72d58b56b1b0dec66d076f083ce4089b0307')
